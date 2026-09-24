@@ -1,0 +1,22 @@
+{
+  "name": "tha-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node scripts/ensure-db.js && node src/index.js",
+    "setup": "prisma migrate reset --force",
+    "postinstall": "prisma generate"
+  },
+  "prisma": {
+    "seed": "node prisma/seed.js"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "prisma": "5.22.0"
+  }
+}

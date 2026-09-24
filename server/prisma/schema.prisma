@@ -1,0 +1,172 @@
+// Tribal Heritage Archive — data model
+//
+// Design notes
+// - Community, Language, Place, Subject and Person are controlled vocabularies:
+//   items point at a row in these tables instead of storing free text, so a
+//   name is spelled one way everywhere and can be corrected in one place.
+// - Media files live on disk / object storage. The database only stores where
+//   each file is and its checksum, so file integrity can be verified later.
+// - SQLite has no native enum type in Prisma 5, so itemType, accessLevel and
+//   the role fields are stored as strings. The allowed values are defined
+//   once in src/vocab.js and enforced by the API.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// ---------------------------------------------------------------------------
+// Controlled vocabularies
+// ---------------------------------------------------------------------------
+
+model Community {
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  items         Item[]
+  fieldSessions FieldSession[]
+}
+
+model Language {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  items Item[]
+}
+
+model Place {
+  id                   Int            @id @default(autoincrement())
+  village              String
+  tehsil               String
+  district             String
+  isSeasonalSettlement Boolean        @default(false) // e.g. a summer dhok / behak
+  items                Item[]
+  fieldSessions        FieldSession[]
+
+  @@unique([village, tehsil, district])
+}
+
+model Subject {
+  id    Int           @id @default(autoincrement())
+  name  String        @unique
+  items ItemSubject[]
+}
+
+model Person {
+  id    Int          @id @default(autoincrement())
+  name  String
+  role  String // primary role: PERFORMER | INFORMANT | RESEARCHER | TRANSLATOR
+  items ItemPerson[]
+}
+
+// ---------------------------------------------------------------------------
+// Provenance: a visit to a place, under a recorded consent agreement
+// ---------------------------------------------------------------------------
+
+model FieldSession {
+  id               Int       @id @default(autoincrement())
+  date             DateTime
+  placeId          Int
+  place            Place     @relation(fields: [placeId], references: [id])
+  communityId      Int
+  community        Community @relation(fields: [communityId], references: [id])
+  researcherName   String
+  consentReference String // points to the signed / recorded consent form
+  notes            String?
+  items            Item[]
+
+  @@index([placeId])
+  @@index([communityId])
+}
+
+// ---------------------------------------------------------------------------
+// The archival item and what hangs off it
+// ---------------------------------------------------------------------------
+
+model Item {
+  id              Int          @id @default(autoincrement())
+  identifier      String       @unique // e.g. TRB-2025-0001
+  titleOriginal   String?      // title in the source language / script
+  titleEnglish    String
+  description     String
+  itemType        String       // AUDIO | VIDEO | PHOTOGRAPH | TEXT | BUILT_STRUCTURE
+  dateRecorded    DateTime
+  accessLevel     String       // PUBLIC | RESEARCHER | COMMUNITY | RESTRICTED
+  durationSeconds Int?         // only for time-based media
+
+  fieldSessionId  Int
+  fieldSession    FieldSession @relation(fields: [fieldSessionId], references: [id])
+  // Place and community are stored on the item as well as the session:
+  // one session can capture material from a neighbouring village or group.
+  placeId         Int
+  place           Place        @relation(fields: [placeId], references: [id])
+  communityId     Int
+  community       Community    @relation(fields: [communityId], references: [id])
+  languageId      Int?         // null for photographs / structures with no speech
+  language        Language?    @relation(fields: [languageId], references: [id])
+
+  mediaFiles      MediaFile[]
+  transcript      Transcript?
+  subjects        ItemSubject[]
+  people          ItemPerson[]
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([fieldSessionId])
+  @@index([communityId])
+  @@index([languageId])
+  @@index([placeId])
+  @@index([itemType])
+  @@index([accessLevel])
+}
+
+model MediaFile {
+  id        Int    @id @default(autoincrement())
+  itemId    Int
+  item      Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  role      String // MASTER | ACCESS | THUMBNAIL
+  format    String // e.g. WAV, MP3, TIFF, JPEG, MP4
+  filePath  String // relative path in archive storage; the file is not in the DB
+  sizeBytes BigInt // 64-bit: video masters easily exceed 2 GB
+  checksum  String // "sha256:<hex>" — used to detect corruption or tampering
+
+  @@unique([itemId, role, filePath])
+  @@index([itemId])
+}
+
+model Transcript {
+  id                  Int     @id @default(autoincrement())
+  itemId              Int     @unique // one transcript per item
+  item                Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  textOriginal        String  // in the original script
+  textTransliteration String? // romanised
+  textTranslation     String? // English
+}
+
+// ---------------------------------------------------------------------------
+// Many-to-many joins
+// ---------------------------------------------------------------------------
+
+model ItemSubject {
+  itemId    Int
+  item      Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  subjectId Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  @@id([itemId, subjectId])
+  @@index([subjectId])
+}
+
+model ItemPerson {
+  itemId   Int
+  item     Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  personId Int
+  person   Person @relation(fields: [personId], references: [id])
+  role     String // what this person did on THIS item: PERFORMER | INFORMANT | RECORDIST | TRANSLATOR | TRANSCRIBER | PHOTOGRAPHER
+
+  @@id([itemId, personId, role]) // same person can have two roles on one item
+  @@index([personId])
+}

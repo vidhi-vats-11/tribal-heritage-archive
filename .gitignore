@@ -1,0 +1,21 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Environment files
+.env
+.env.*
+
+# Local SQLite database (created and seeded on first `npm run dev`)
+server/prisma/*.db
+server/prisma/*.db-journal
+server/prisma/*.db-wal
+server/prisma/*.db-shm
+
+# Logs and OS/editor clutter
+*.log
+.DS_Store
+.vscode/
+.idea/
+
+# Note: server/prisma/migrations/ and server/prisma/seed.js ARE committed.

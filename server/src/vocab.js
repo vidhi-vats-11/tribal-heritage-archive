@@ -1,0 +1,9 @@
+// Fixed value lists. SQLite stores these as text, so the API validates
+// against these arrays (the equivalent of enums on Postgres).
+const ITEM_TYPES = ['AUDIO', 'VIDEO', 'PHOTOGRAPH', 'TEXT', 'BUILT_STRUCTURE'];
+const ACCESS_LEVELS = ['PUBLIC', 'RESEARCHER', 'COMMUNITY', 'RESTRICTED'];
+const MEDIA_ROLES = ['MASTER', 'ACCESS', 'THUMBNAIL'];
+const PERSON_ROLES = ['PERFORMER', 'INFORMANT', 'RESEARCHER', 'TRANSLATOR'];
+const CONTRIBUTOR_ROLES = ['PERFORMER', 'INFORMANT', 'RECORDIST', 'TRANSLATOR', 'TRANSCRIBER', 'PHOTOGRAPHER'];
+
+module.exports = { ITEM_TYPES, ACCESS_LEVELS, MEDIA_ROLES, PERSON_ROLES, CONTRIBUTOR_ROLES };
