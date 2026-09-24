@@ -11,6 +11,16 @@ Gaddi, Sippi and Bot communities.
 > short generated tune. Nothing is taken from any real archive, recording or
 > person.
 
+**Items list, filtered to audio recordings.** Each item shows its access level
+as a coloured badge.
+
+![Items list filtered to audio items, showing identifier, title, type, community, language, place and a coloured access badge for each](docs/items-list-filtered.png)
+
+**Item detail,** with the access badge, audio player, and transcript shown as
+original, transliteration and English translation side by side.
+
+![Item detail page for TRB-2025-0001 showing a green Public badge, an audio player, field session details, contributors and a three-column transcript](docs/item-detail.png)
+
 ## Why it exists
 
 Material recorded in the field (a migration song sung the night before the
