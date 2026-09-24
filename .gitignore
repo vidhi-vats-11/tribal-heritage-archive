@@ -19,3 +19,6 @@ server/prisma/*.db-shm
 .idea/
 
 # Note: server/prisma/migrations/ and server/prisma/seed.js ARE committed.
+
+# Personal one-pager — kept local, not committed
+docs/one-pager.html
