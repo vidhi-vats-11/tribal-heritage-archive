@@ -46,7 +46,15 @@ function masterFile(identifier, format, sizeBytes) {
 }
 
 async function main() {
-  // Clear in dependency order so the seed can be re-run.
+  // Runs on every build and start in production, so skip if the database
+  // already holds data. `npm run setup` still rebuilds from scratch because
+  // `prisma migrate reset` empties the database before seeding.
+  if (!process.argv.includes('--force') && (await prisma.item.count()) > 0) {
+    console.log('Database already seeded, skipping.');
+    return;
+  }
+
+  // Clear in dependency order so a forced seed can be re-run.
   await prisma.itemPerson.deleteMany();
   await prisma.itemSubject.deleteMany();
   await prisma.transcript.deleteMany();

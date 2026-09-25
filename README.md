@@ -11,6 +11,12 @@ Gaddi, Sippi and Bot communities.
 > short generated tune. Nothing is taken from any real archive, recording or
 > person.
 
+**Live demo:** https://tribal-heritage-archive.vercel.app
+(API: https://tribal-heritage-archive-api.onrender.com). The API runs on
+Render's free tier, so the first request after a quiet spell can take up to a
+minute while it wakes up. Items added on the live site are wiped whenever the
+API restarts or redeploys; it always comes back with the 10 demo items.
+
 **Items list, filtered to audio recordings.** Each item shows its access level
 as a coloured badge.
 
@@ -138,6 +144,27 @@ cd server
 npm run setup        # rebuilds the database from the migrations and re-seeds it
 ```
 
+## Deployment
+
+The API is deployed to **Render** and the web app to **Vercel**.
+
+| Part | Host   | Root directory | Build                       | Start       | Environment variables |
+|------|--------|----------------|-----------------------------|-------------|-----------------------|
+| API  | Render | `server`       | `npm ci && npm run build`   | `npm start` | `CORS_ORIGINS`: comma-separated browser origins allowed to call the API, e.g. `https://tribal-heritage-archive.vercel.app,http://localhost:5173` |
+| Web  | Vercel | `client`       | `npm run build` (Vite preset) | (static)  | `VITE_API_URL`: the API's base URL, e.g. `https://tribal-heritage-archive-api.onrender.com` |
+
+- Render's free disk is temporary, so the SQLite database is rebuilt on every
+  deploy and restart. `npm run build` and `npm start` both run
+  `prisma migrate deploy` and then the seed. The seed skips itself when the
+  database already has items, so running it twice never duplicates rows.
+  (`npm run setup` still wipes and reseeds locally.)
+- `GET /health` returns `{"status":"ok"}` and is Render's health check.
+- `render.yaml` describes the Render service, and `client/vercel.json` sends
+  deep links such as `/items/TRB-2025-0001` to the React app.
+- The sample audio in `client/public/audio` is served by Vercel with the rest
+  of the web app.
+- `VITE_API_URL` is read at build time, so redeploy on Vercel after changing it.
+
 ## Stack
 
 | Part     | Technology                                   |
@@ -155,6 +182,7 @@ npm run setup        # rebuilds the database from the migrations and re-seeds it
 | POST   | `/api/items`             | Create an item. Invalid input returns field-by-field `errors`  |
 | GET    | `/api/sessions`          | Field sessions with item counts                                |
 | GET    | `/api/vocab`             | All controlled lists, used to fill dropdowns and filters       |
+| GET    | `/health`                | Liveness check for the host                                    |
 
 ### Layout
 

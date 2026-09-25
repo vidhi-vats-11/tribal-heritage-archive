@@ -7,8 +7,16 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+// Browser origins allowed to call the API, as a comma-separated list, e.g.
+// CORS_ORIGINS=https://tribal-heritage-archive.vercel.app,http://localhost:5173
+const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:5173')
+  .split(',')
+  .map((o) => o.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+app.use(cors({ origin: corsOrigins }));
 app.use(express.json());
+
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
 // MediaFile.sizeBytes is a BigInt, which JSON.stringify cannot handle.
 app.set('json replacer', (key, value) => (typeof value === 'bigint' ? value.toString() : value));
 

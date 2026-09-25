@@ -5,6 +5,8 @@
   "type": "commonjs",
   "scripts": {
     "dev": "node scripts/ensure-db.js && node src/index.js",
+    "build": "prisma migrate deploy && prisma db seed",
+    "start": "prisma migrate deploy && prisma db seed && node src/index.js",
     "setup": "prisma migrate reset --force",
     "postinstall": "prisma generate"
   },
@@ -14,9 +16,10 @@
   "dependencies": {
     "@prisma/client": "5.22.0",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
-  },
-  "devDependencies": {
+    "express": "^4.21.2",
     "prisma": "5.22.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
