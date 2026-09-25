@@ -17,6 +17,12 @@ app.use(cors({ origin: corsOrigins }));
 app.use(express.json());
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// The API has no pages of its own; point anyone who opens the bare URL at it.
+app.get('/', (req, res) => res.json({
+  service: 'Tribal Heritage Archive API',
+  endpoints: ['/api/items', '/api/items/:identifier', '/api/sessions', '/api/vocab', '/health'],
+}));
 // MediaFile.sizeBytes is a BigInt, which JSON.stringify cannot handle.
 app.set('json replacer', (key, value) => (typeof value === 'bigint' ? value.toString() : value));
 
